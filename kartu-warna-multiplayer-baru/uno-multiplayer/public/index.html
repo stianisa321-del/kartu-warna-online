@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kartu Warna Online</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#f6fbf6;background:#102b25}
+*{box-sizing:border-box}body{margin:0;padding:20px;background:radial-gradient(ellipse at top,#1d5544,#102b25 65%);min-height:100vh}
+main{max-width:950px;margin:auto}.head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:12px}.logo{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:#f3cd61;color:#19382d;border:3px solid white;font-weight:1000;transform:rotate(-8deg)}
+h1{font-size:clamp(1.5rem,4vw,2.2rem);margin:0;letter-spacing:-.04em}.muted{opacity:.72;font-size:.9rem;margin:.25rem 0}
+.panel{background:#174437;border:1px solid #2d6655;border-radius:20px;padding:18px;margin-bottom:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}
+input{min-width:0;width:100%;padding:12px;border:1px solid #588171;border-radius:11px;background:#0e3027;color:white;font:inherit}
+button{font:inherit;font-weight:750;border:0;border-radius:11px;padding:12px 15px;cursor:pointer;background:#f2cd62;color:#17382d;min-height:44px}
+button:disabled{opacity:.4;cursor:not-allowed}.secondary{background:#2d6655;color:#fff}.danger{background:#df5454;color:white}
+#lobby,#game{display:none}.players{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.player{background:#0e3027;border:1px solid #356b59;border-radius:12px;padding:10px 12px;min-width:125px}.player small{display:block;opacity:.7}
+.table{border-radius:18px;background:#0f382d;border:1px solid #2b6652;padding:18px;text-align:center}
+.top-area{display:flex;justify-content:center;align-items:center;gap:34px;padding:24px 0}.pile-label{font-size:.8rem;opacity:.7;margin-bottom:8px}
+.card{position:relative;width:68px;height:98px;border:3px solid #fff;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:white;font-size:1.8rem;font-weight:950;box-shadow:0 4px 0 #0003;text-shadow:0 1px 2px #0004}
+.card:before{content:"";position:absolute;inset:8px 5px;border:2px solid #ffffffad;border-radius:50%;transform:rotate(-25deg)}.card span,.card small{z-index:1}.card small{position:absolute;top:5px;left:4px;font-size:.48rem}
+.red{background:#e84a4a}.blue{background:#2787dc}.green{background:#169b68}.yellow{background:#e8c232;color:#263324;text-shadow:none}.wild{background:conic-gradient(#e84a4a 0 25%,#2787dc 0 50%,#169b68 0 75%,#e8c232 0);color:white}
+.hand{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:16px 0;min-height:125px}.hand button{padding:0;background:transparent;min-height:0;border-radius:12px}.hand .card{cursor:pointer;transition:transform .12s}.hand .card:hover{transform:translateY(-6px)}.hand button:disabled .card{filter:grayscale(.5);opacity:.48}
+#status{min-height:24px;font-weight:700;text-align:center;margin:12px 0}.hidden{display:none!important}.roomcode{font-size:1.25rem;font-weight:900;letter-spacing:.15em;background:#0e3027;border-radius:9px;padding:8px 12px;display:inline-block}
+.colors{display:flex;gap:10px;justify-content:center;margin:10px}.dot{width:42px;height:42px;min-height:42px;padding:0;border:3px solid white;border-radius:50%}
+footer{font-size:.8rem;opacity:.68;text-align:center;margin:16px}
+@media(max-width:520px){body{padding:12px}.panel{padding:13px}.card{width:57px;height:84px;font-size:1.5rem}.hand{gap:5px}.top-area{gap:20px}.player{min-width:calc(50% - 8px)}}
+</style>
+</head>
+<body><main>
+<header class="head"><div class="brand"><div class="logo">KW</div><div><h1>Kartu Warna Online</h1><p class="muted">Main bareng teman • 2–4 pemain</p></div></div><div id="connection" class="muted">Menghubungkan…</div></header>
+<section class="panel" id="home">
+  <h2>Bergabung dan mulai bermain</h2><p class="muted">Masukkan nama, lalu buat ruangan atau gabung memakai kode teman.</p>
+  <div style="margin:12px 0"><label for="name">Nama pemain</label><input id="name" maxlength="18" placeholder="Contoh: Rani"></div>
+  <div class="row"><button id="create">＋ Buat ruangan</button><div><input id="codeInput" maxlength="6" placeholder="KODE RUANGAN" aria-label="Kode ruangan"></div><button id="join" class="secondary">Gabung</button></div>
+  <p id="homeError" role="alert"></p>
+</section>
+<section class="panel" id="lobby">
+  <div class="row"><div><h2>Ruang tunggu</h2><p class="muted">Kirim kode ini ke temanmu:</p><span class="roomcode" id="roomCode"></span></div><button id="copy" class="secondary">Salin kode</button></div>
+  <div id="lobbyPlayers" class="players"></div><p id="lobbyInfo" class="muted">Menunggu pemain lain…</p><button id="start">Mulai permainan</button> <button id="leave" class="secondary">Keluar ruangan</button>
+</section>
+<section id="game" class="panel">
+  <div class="row"><div><h2>Meja permainan</h2><p class="muted" id="turnInfo"></p></div><div style="text-align:right"><span class="roomcode" id="gameCode"></span></div></div>
+  <div id="gamePlayers" class="players"></div>
+  <div class="table"><div class="muted" id="deckInfo"></div><div class="top-area"><div><div class="pile-label">Kartu teratas</div><div id="topCard"></div></div><div><div class="pile-label">Ambil kartu</div><button class="card wild" id="draw"><span>?</span></button></div></div><div id="status" aria-live="polite"></div><div id="chooseColor" class="colors hidden"><button class="dot red" data-color="red" aria-label="Pilih merah"></button><button class="dot blue" data-color="blue" aria-label="Pilih biru"></button><button class="dot green" data-color="green" aria-label="Pilih hijau"></button><button class="dot yellow" data-color="yellow" aria-label="Pilih kuning"></button></div></div>
+  <h3>Kartu di tanganmu <span id="handCount"></span></h3><div id="hand" class="hand"></div><button id="sayUno" class="secondary">UNO!</button> <button id="newRound" class="secondary">Kembali ke lobi</button>
+</section>
+<footer>Demo multiplayer menggunakan server real-time. Aturan kartu disederhanakan; tidak berafiliasi dengan merek UNO resmi.</footer>
+</main>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket=io();
+const $=id=>document.getElementById(id);
+let roomCode="", state=null, pendingWild=null;
+const names={red:"Merah",blue:"Biru",green:"Hijau",yellow:"Kuning",wild:"Joker"};
+const label=v=>({Skip:"Lewati",Reverse:"Balik","+2":"+2","+4":"+4",Wild:"★"}[v]||v);
+function msg(id,text){$(id).textContent=text||""}
+function emitAck(event,data){return new Promise(resolve=>socket.emit(event,data,resolve))}
+socket.on("connect",()=>msg("connection","● Terhubung"));
+socket.on("disconnect",()=>msg("connection","○ Terputus"));
+socket.on("state",s=>{state=s;roomCode=s.code;render();});
+function cardHTML(c){return `<div class="card ${c.color}"><small>${names[c.color]||""}</small><span>${label(c.value)}</span></div>`}
+function render(){
+ if(!state)return;
+ $("home").style.display=state.status==="lobby"&&state.players.some(p=>p.id===socket.id)?"none":"";
+ $("lobby").style.display=state.status==="lobby"&&state.players.some(p=>p.id===socket.id)?"block":"none";
+ $("game").style.display=state.status!=="lobby"&&state.players.some(p=>p.id===socket.id)?"block":"none";
+ $("roomCode").textContent=state.code;$("gameCode").textContent=state.code;
+ $("lobbyPlayers").innerHTML=state.players.map(p=>`<div class="player">${escapeHTML(p.name)} ${p.host?"👑":""}<small>${p.count} kartu</small></div>`).join("");
+ $("lobbyInfo").textContent=`${state.players.length}/4 pemain. ${state.players.length<2?"Butuh minimal 2 pemain untuk mulai.":"Semua siap? Host bisa memulai."}`;
+ $("start").style.display=state.hostId===socket.id?"inline-block":"none";
+ $("start").disabled=state.players.length<2;
+ $("gamePlayers").innerHTML=state.players.map((p,i)=>`<div class="player" style="${state.turn===i?"outline:2px solid #f2cd62":""}">${state.turn===i?"▶ ":""}${escapeHTML(p.name)} ${p.id===socket.id?"(Kamu)":""}<small>${p.count} kartu ${p.host?"• Host":""}</small></div>`).join("");
+ $("turnInfo").textContent=state.status==="finished"?"Permainan selesai":`Giliran: ${state.players[state.turn]?.name||"—"} ${state.turn===state.players.findIndex(p=>p.id===socket.id)?"(kamu)":""}`;
+ $("topCard").innerHTML=cardHTML(state.top);
+ $("deckInfo").textContent=`Sisa tumpukan: ${state.deckCount} kartu${state.chosenColor?" • Warna aktif: "+names[state.chosenColor]:""}`;
+ $("status").textContent=state.message+(state.status==="finished"?" — Tekan “Kembali ke lobi” untuk sesi baru.":"");
+ $("handCount").textContent=`(${state.hand.length})`;
+ const myTurn=state.status==="playing"&&state.players[state.turn]?.id===socket.id;
+ $("draw").disabled=!myTurn;
+ $("hand").innerHTML=state.hand.map(c=>`<button data-card="${c.id}" aria-label="${names[c.color]} ${label(c.value)}" ${!myTurn||!isLegal(c)?"disabled":""}>${cardHTML(c)}</button>`).join("");
+ $("sayUno").disabled=state.hand.length!==1;
+}
+function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function isLegal(c){return c.color==="wild"||c.color===(state.chosenColor||state.top.color)||c.value===state.top.value;}
+function getName(){return $("name").value.trim()||"Pemain";}
+$("create").onclick=async()=>{msg("homeError","");const r=await emitAck("createRoom",{name:getName()});if(!r?.ok)msg("homeError",r?.error||"Gagal membuat ruangan.");else roomCode=r.code;};
+$("join").onclick=async()=>{msg("homeError","");const code=$("codeInput").value.trim().toUpperCase();if(!code)return msg("homeError","Masukkan kode ruangan.");const r=await emitAck("joinRoom",{name:getName(),code});if(!r?.ok)msg("homeError",r?.error||"Tidak bisa bergabung.");else roomCode=r.code;};
+$("start").onclick=async()=>{const r=await emitAck("startGame",{code:roomCode});if(!r?.ok)msg("lobbyInfo",r?.error);};
+$("copy").onclick=async()=>{try{await navigator.clipboard.writeText(roomCode);msg("lobbyInfo","Kode disalin: "+roomCode);}catch{msg("lobbyInfo","Kode ruangan: "+roomCode+" (salin secara manual).");}};
+$("leave").onclick=()=>location.reload();
+$("newRound").onclick=()=>location.reload();
+$("draw").onclick=async()=>{const r=await emitAck("drawCard",{code:roomCode});if(!r?.ok)msg("status",r?.error);};
+$("hand").onclick=async e=>{const b=e.target.closest("[data-card]");if(!b||b.disabled)return;const c=state.hand.find(c=>c.id===b.dataset.card);if(!c)return;if(c.color==="wild"){pendingWild=c;$("chooseColor").classList.remove("hidden");msg("status","Pilih warna untuk kartu Joker.");return;}const r=await emitAck("playCard",{code:roomCode,cardId:c.id});if(!r?.ok)msg("status",r?.error);};
+$("chooseColor").onclick=async e=>{const b=e.target.closest("[data-color]");if(!b||!pendingWild)return;const c=pendingWild;pendingWild=null;$("chooseColor").classList.add("hidden");const r=await emitAck("playCard",{code:roomCode,cardId:c.id,color:b.dataset.color});if(!r?.ok)msg("status",r?.error);};
+$("sayUno").onclick=()=>msg("status","UNO! (Pengumuman lokal pada demo ini).");
+</script>
+</body></html>
